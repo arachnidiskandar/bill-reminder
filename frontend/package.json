@@ -1,5 +1,5 @@
 {
-  "name": "react-boilerplate-typescript",
+  "name": "bill-reminder-frontend",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
