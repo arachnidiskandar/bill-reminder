@@ -21,11 +21,11 @@ services:
       HASURA_GRAPHQL_DEV_MODE: "true"
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
       HASURA_GRAPHQL_ADMIN_SECRET: admin_secret
+      HASURA_GRAPHQL_JWT_SECRET: '{"type": "RS256", "jwk_url": "https://dev-fee1uvy1.us.auth0.com/.well-known/jwks.json"}'
   backend:
     build: 
       dockerfile: Dockerfile.dev
       context: ./backend
-    command: npm run dev
     ports:
       - "4000:4000"
     volumes:
@@ -35,7 +35,6 @@ services:
     build: 
       dockerfile: Dockerfile.dev
       context: ./frontend
-    command: npm run start
     ports:
       - "3000:3000"
     volumes:
