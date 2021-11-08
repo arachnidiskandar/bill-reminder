@@ -6,9 +6,6 @@
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:@typescript-eslint/recommended-requiring-type-checking",
-    "plugin:functional/external-recommended",
-    "plugin:functional/recommended",
-    "plugin:functional/stylistic",
     "prettier",
     "plugin:prettier/recommended",
     "plugin:jsx-a11y/recommended"
@@ -30,7 +27,6 @@
     "@typescript-eslint",
     "prettier",
     "jsx-a11y",
-    "functional"
   ],
   "settings": {
     "react": {
@@ -41,6 +37,9 @@
     "@typescript-eslint/camelcase": "off",
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
+    "no-shadow": "off",
+    "@typescript-eslint/no-shadow": "error",
+    "no-void": "off",
     "@typescript-eslint/require-await": "off",
     "no-console": "warn",
     "import/extensions": "off",
@@ -52,6 +51,7 @@
       "endOfLine": "auto"
     }],
     "react/require-default-props": "off",
+    "react/jsx-props-no-spreading": "off",
     "react/jsx-filename-extension": [
       1,
       {
@@ -62,7 +62,7 @@
       }
     ],
     "react/state-in-constructor": "off",
-    "functional/functional-parameters": "off",
-    "no-empty": "warn"
+    "no-empty": "warn",
+
   }
 }
