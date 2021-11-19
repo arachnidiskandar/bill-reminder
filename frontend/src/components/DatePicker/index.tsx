@@ -26,6 +26,7 @@ type DatePickerProps = {
   fieldName: string;
   errorObject: FieldError | undefined;
   control: any;
+  disabled?: boolean;
 };
 
 const DatePicker = ({
@@ -34,6 +35,7 @@ const DatePicker = ({
   errorObject,
   control,
   required = false,
+  disabled = false,
 }: DatePickerProps) => {
   const [isFocused, setIsFocused] = useState(false);
   const { colorMode } = useColorMode();
@@ -72,6 +74,7 @@ const DatePicker = ({
             transitionProperty="all"
             transitionDuration="200ms"
             as={ReactDatePicker}
+            disabled={disabled}
             selected={value}
             onChange={(e: any) => onChange(e)}
             dateFormat="dd/MM/yyyy"

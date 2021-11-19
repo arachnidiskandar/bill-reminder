@@ -1,11 +1,17 @@
+import React from 'react';
 import { gql, useMutation } from '@apollo/client';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useToast } from '@chakra-ui/react';
-import React from 'react';
-import { FormValues } from '.';
+
 import useNotification from '../../../../hooks/useNotification';
-import { IBill } from '../../../../interfaces/Bill';
+import {
+  BillFormValues,
+  BillRepeatType,
+  IBill,
+} from '../../../../interfaces/Bill';
 import useStore, { BillsState } from '../../../../store/useStore';
+import useCalendar from '../../../../hooks/useCalendar';
+import { BillObject } from '../CreateBillModal/hooks';
 
 const UPDATE_BILL = gql`
   mutation MyMutation($id: uuid!, $_set: Bills_set_input) {
@@ -15,28 +21,22 @@ const UPDATE_BILL = gql`
   }
 `;
 
-const buildBillObj = async (
-  formValues: FormValues,
-  createSubscription: () => Promise<PushSubscription | undefined>,
-  shouldCreateNewSub: boolean
-) => {
-  if (!formValues.shouldNotifyUser) {
-    return { ...formValues, notificationSubscription: null };
-  }
-  if (!shouldCreateNewSub) {
-    return { ...formValues };
-  }
-  const subscription = await createSubscription();
-  return {
-    ...formValues,
-    notificationSubscription: JSON.stringify(subscription),
-  };
-};
+export interface EditBillObject {
+  billName: string;
+  isRepeatable: boolean;
+  repeatType: BillRepeatType;
+  dueDate: Date;
+  repeatUpTo: Date;
+  billValue: number;
+  repeatForever: boolean;
+  observations: string | null;
+  category: string | undefined;
+}
 
 const getUpdatedBillsArray = (
   id: string,
   bills: IBill[],
-  formValues: FormValues
+  formValues: EditBillObject
 ) => {
   const indexBillToEdit = bills.findIndex(bill => bill.id === id);
   const updatedBillsList = [
@@ -45,6 +45,16 @@ const getUpdatedBillsArray = (
     ...bills.slice(indexBillToEdit + 1, bills.length - 1),
   ];
   return updatedBillsList;
+};
+
+const createBillObject = (formValues: BillFormValues): EditBillObject => {
+  const category = formValues?.categoryObject?.value;
+  const billObject = {
+    ...formValues,
+    category,
+  };
+  delete billObject.categoryObject;
+  return billObject;
 };
 
 const billSelector = (state: BillsState) => state.bills;
@@ -57,21 +67,23 @@ const useEditBill = () => {
   const toast = useToast();
   const bills = useStore(billSelector);
   const setBills = useStore(setBillsSelector);
-  const { subscribeToNotification } = useNotification();
+  const { createCalendarEventObj, updateBillEventOnCalendar } = useCalendar();
 
   const editBill = async (
     billToEdit: IBill | null,
-    formValues: FormValues,
+    formValues: BillFormValues,
     closeModalMethod: () => void
   ) => {
     if (!billToEdit) {
       return;
     }
-    const bill = await buildBillObj(
-      formValues,
-      subscribeToNotification,
-      !billToEdit.shouldNotifyUser
+    const eventId = billToEdit.eventCalendarId ?? ('' as string);
+    const calendarEvent = createCalendarEventObj(formValues);
+    const eventCalendarId = await updateBillEventOnCalendar(
+      calendarEvent,
+      eventId
     );
+    const bill = createBillObject(formValues);
     const updatedBills = getUpdatedBillsArray(billToEdit.id, bills, bill);
     try {
       await mutate({

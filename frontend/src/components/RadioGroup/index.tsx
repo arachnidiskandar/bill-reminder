@@ -34,7 +34,7 @@ const RadioGroupInput = ({
   return (
     <FormControl as="fieldset" isRequired={required} mb={2}>
       <FormLabel as="legend">{label}</FormLabel>
-      <GroupRadio defaultValue={defaultValue}>
+      <GroupRadio>
         <Grid templateColumns={templateColumns ?? 'repeat(1, 1fr)'} gap={3}>
           {options.map(option => (
             <Radio

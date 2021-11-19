@@ -11,27 +11,21 @@ import {
   Checkbox,
   Spinner,
 } from '@chakra-ui/react';
-import { SubmitHandler, useForm } from 'react-hook-form';
-import { gql } from '@apollo/client';
+import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import RadioGroupInput from '../../../../components/RadioGroup';
 import NumberInput from '../../../../components/NumberInput';
-import { BillRepeatType } from '../../../../interfaces/Bill';
+import { BillFormValues } from '../../../../interfaces/Bill';
 import TextInput from '../../../../components/TextInput';
 import DatePicker from '../../../../components/DatePicker';
 import useStore, { BillsState } from '../../../../store/useStore';
-import Bill from '../Bill';
 import useEditBill from './hooks';
-
-export type FormValues = {
-  billName: string;
-  repeatType: BillRepeatType;
-  dueDate: Date;
-  billValue: number;
-  shouldNotifyUser: boolean;
-};
+import SelectCreatable from '../../../../components/SelectCreatable';
+import { options } from '../CreateBillModal';
+import TextAreaInput from '../../../../components/TextAreaInput';
 
 const idBillToEditSelector = (state: BillsState) => state.billToEdit;
 const closeModalEditSelector = (state: BillsState) => state.closeModalEdit;
+
 const EditBillModal = () => {
   const billToEdit = useStore(idBillToEditSelector);
   const closeModalEdit = useStore(closeModalEditSelector);
@@ -42,8 +36,19 @@ const EditBillModal = () => {
     setValue,
     getValues,
     control,
-  } = useForm<FormValues>();
-  const { editBill } = useEditBill();
+  } = useForm<BillFormValues>();
+  const { editBill, loading } = useEditBill();
+
+  const isRepeatableFieldValue = useWatch({
+    control,
+    name: 'isRepeatable',
+    defaultValue: false,
+  });
+  const isRepeatableForeverFieldValue = useWatch({
+    control,
+    name: 'repeatForever',
+    defaultValue: false,
+  });
 
   useEffect(() => {
     if (!billToEdit) {
@@ -53,11 +58,17 @@ const EditBillModal = () => {
     setValue('billValue', billToEdit.billValue);
     setValue('repeatType', billToEdit.repeatType);
     setValue('dueDate', new Date(billToEdit.dueDate));
-    setValue('shouldNotifyUser', billToEdit.shouldNotifyUser);
+    setValue('categoryObject.value', billToEdit.category ?? '');
+    setValue('categoryObject.label', billToEdit.category ?? '');
+    setValue('repeatUpTo', billToEdit.repeatUpTo);
+    setValue('isRepeatable', billToEdit.isRepeatable);
+    setValue('repeatForever', billToEdit.repeatForever);
+    setValue('observations', billToEdit.observations ?? null);
   }, [billToEdit]);
 
-  const onSubmit: SubmitHandler<FormValues> = async (form: FormValues) =>
-    void editBill(billToEdit, form, closeModalEdit);
+  const onSubmit: SubmitHandler<BillFormValues> = async (
+    form: BillFormValues
+  ) => void editBill(billToEdit, form, closeModalEdit);
 
   return (
     <>
@@ -76,22 +87,6 @@ const EditBillModal = () => {
                 errorObject={errors.billName}
                 required
               />
-              <RadioGroupInput
-                register={register}
-                fieldName="repeatType"
-                label="Qual a recorrencia da conta?"
-                errorObject={errors.repeatType}
-                required
-                options={['MONTHLY', 'ANNUALLY', 'ONCE']}
-                defaultValue={billToEdit?.repeatType}
-              />
-              <DatePicker
-                fieldName="dueDate"
-                label="Data de vencimento"
-                required
-                errorObject={errors.dueDate}
-                control={control}
-              />
               <NumberInput
                 register={register}
                 fieldName="billValue"
@@ -99,16 +94,64 @@ const EditBillModal = () => {
                 errorObject={errors.billValue}
                 label="Valor"
               />
-              <Checkbox {...register('shouldNotifyUser')}>
-                Enviar Notificações
+              <SelectCreatable
+                fieldName="categoryObject"
+                label="Selecione uma categoria"
+                placeholder="Selecione ou crie uma categoria..."
+                required
+                control={control}
+                options={options}
+                errorObject={errors.categoryObject?.value}
+              />
+
+              <DatePicker
+                fieldName="dueDate"
+                label="Data de vencimento"
+                required
+                errorObject={errors.dueDate}
+                control={control}
+              />
+              <Checkbox my={2} {...register('isRepeatable')}>
+                Repetível
               </Checkbox>
+              {isRepeatableFieldValue && (
+                <>
+                  <RadioGroupInput
+                    register={register}
+                    fieldName="repeatType"
+                    label="Qual a recorrencia da conta?"
+                    errorObject={errors.repeatType}
+                    required
+                    options={['WEEKLY', 'MONTHLY', 'ANNUALLY']}
+                    defaultValue={getValues('repeatType')}
+                  />
+                  <DatePicker
+                    fieldName="repeatUpTo"
+                    label="Repete até o dia"
+                    required={!isRepeatableForeverFieldValue}
+                    errorObject={errors.repeatUpTo}
+                    control={control}
+                    disabled={isRepeatableForeverFieldValue}
+                  />
+                  <Checkbox my={2} {...register('repeatForever')}>
+                    Sem prazo final
+                  </Checkbox>
+                </>
+              )}
+              <TextAreaInput
+                register={register}
+                fieldName="observations"
+                label="Observações"
+                placeHolder="Insira links, notas, explicações, etc..."
+                errorObject={errors.observations}
+              />
             </ModalBody>
             <ModalFooter>
               <Button onClick={closeModalEdit} variant="ghost" mr={3}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={!isDirty} colorScheme="green">
-                Editar
+              <Button type="submit" colorScheme="green" disabled={loading}>
+                {loading ? <Spinner /> : 'Editar Conta'}
               </Button>
             </ModalFooter>
           </form>

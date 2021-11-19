@@ -5,10 +5,15 @@ export const GET_BILLS = gql`
     bills {
       id
       billName
+      category
       dueDate
       billValue
       repeatType
-      shouldNotifyUser
+      observations
+      repeatForever
+      repeatUpTo
+      isRepeatable
+      eventCalendarId
     }
   }
 `;

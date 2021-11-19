@@ -17,6 +17,7 @@ interface BillsList {
 
 const selector = (state: BillsState) => state.bills;
 const setBillsSelector = (state: BillsState) => state.setBills;
+
 const BillList = () => {
   const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
   const { loading, data } = useQuery<BillsList>(GET_BILLS);

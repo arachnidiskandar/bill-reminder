@@ -26,7 +26,7 @@
     "react-hooks",
     "@typescript-eslint",
     "prettier",
-    "jsx-a11y",
+    "jsx-a11y"
   ],
   "settings": {
     "react": {
@@ -50,6 +50,7 @@
     "prettier/prettier": ["error", {
       "endOfLine": "auto"
     }],
+    "react-hooks/exhaustive-deps": "warn",
     "react/require-default-props": "off",
     "react/jsx-props-no-spreading": "off",
     "react/jsx-filename-extension": [

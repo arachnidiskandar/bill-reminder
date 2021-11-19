@@ -11,32 +11,22 @@ import {
   Checkbox,
   Spinner,
 } from '@chakra-ui/react';
-import Creatable from 'react-select/creatable';
 import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import RadioGroupInput from '../../../../components/RadioGroup';
 import NumberInput from '../../../../components/NumberInput';
-import { BillRepeatType } from '../../../../interfaces/Bill';
+import { BillFormValues } from '../../../../interfaces/Bill';
 import useCreateBill from './hooks';
 import TextInput from '../../../../components/TextInput';
 import DatePicker from '../../../../components/DatePicker';
 import SelectCreatable from '../../../../components/SelectCreatable';
+import TextAreaInput from '../../../../components/TextAreaInput';
 
 type CreateModalProps = {
   isOpen: boolean;
   toggleMethod: () => void;
 };
 
-export type FormValues = {
-  billName: string;
-  isRepeatable: boolean;
-  repeatType: BillRepeatType;
-  category: string;
-  dueDate: Date;
-  repeatUpTo: Date;
-  billValue: number;
-};
-
-const options = [
+export const options = [
   { value: 'food', label: 'Comida' },
   { value: 'credit card', label: 'Cartão de crédito' },
   { value: 'gift', label: 'Presente' },
@@ -54,15 +44,21 @@ const CreateBillModal = ({ isOpen, toggleMethod }: CreateModalProps) => {
     handleSubmit,
     formState: { errors },
     control,
-  } = useForm<FormValues>();
+  } = useForm<BillFormValues>();
   const { loading, createBill } = useCreateBill();
 
-  const onSubmit: SubmitHandler<FormValues> = async (form: FormValues) =>
-    void createBill(form, toggleMethod);
+  const onSubmit: SubmitHandler<BillFormValues> = async (
+    form: BillFormValues
+  ) => void createBill(form, toggleMethod);
 
   const isRepeatableFieldValue = useWatch({
     control,
     name: 'isRepeatable',
+    defaultValue: false,
+  });
+  const isRepeatableForeverFieldValue = useWatch({
+    control,
+    name: 'repeatForever',
     defaultValue: false,
   });
   return (
@@ -90,13 +86,13 @@ const CreateBillModal = ({ isOpen, toggleMethod }: CreateModalProps) => {
                 label="Valor"
               />
               <SelectCreatable
-                fieldName="category"
+                fieldName="categoryObject"
                 label="Selecione uma categoria"
                 placeholder="Selecione ou crie uma categoria..."
                 required
                 control={control}
                 options={options}
-                errorObject={errors.category}
+                errorObject={errors.categoryObject?.value}
               />
 
               <DatePicker
@@ -107,7 +103,7 @@ const CreateBillModal = ({ isOpen, toggleMethod }: CreateModalProps) => {
                 control={control}
               />
               <Checkbox my={2} {...register('isRepeatable')}>
-                Repitível
+                Repetível
               </Checkbox>
               {isRepeatableFieldValue && (
                 <>
@@ -122,12 +118,23 @@ const CreateBillModal = ({ isOpen, toggleMethod }: CreateModalProps) => {
                   <DatePicker
                     fieldName="repeatUpTo"
                     label="Repete até o dia"
-                    required
+                    required={!isRepeatableForeverFieldValue}
                     errorObject={errors.repeatUpTo}
                     control={control}
+                    disabled={isRepeatableForeverFieldValue}
                   />
+                  <Checkbox my={2} {...register('repeatForever')}>
+                    Sem prazo final
+                  </Checkbox>
                 </>
               )}
+              <TextAreaInput
+                register={register}
+                fieldName="observations"
+                label="Observações"
+                placeHolder="Insira links, notas, explicações, etc..."
+                errorObject={errors.observations}
+              />
             </ModalBody>
             <ModalFooter>
               <Button onClick={toggleMethod} variant="ghost" mr={3}>
