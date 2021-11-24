@@ -10,8 +10,8 @@ export interface IBill {
   isRepeatable: boolean;
   repeatType: BillRepeatType;
   category: string | undefined;
-  dueDate: Date;
-  repeatUpTo: Date;
+  dueDate: string;
+  repeatUpTo: string;
   billValue: number;
   repeatForever: boolean;
   observations?: string | null;
@@ -24,8 +24,12 @@ export type BillFormValues = {
   repeatType: BillRepeatType;
   categoryObject?: { value: string; label: string };
   dueDate: Date;
-  repeatUpTo: Date;
+  repeatUpTo: Date | null;
   billValue: number;
   repeatForever: boolean;
   observations: string | null;
 };
+
+export interface BillsList {
+  bills: IBill[];
+}

@@ -46,14 +46,16 @@ interface EventGoogleCalendar {
 const buildRecurrenceObj = (
   dueDate: Date,
   repeatType: BillRepeatType,
-  repeatUpTo: Date,
+  repeatUpTo: Date | null,
   repeatForever: boolean
 ): Recurrence => {
   const day = dueDate && dueDate.getDate();
   const month = dueDate && dueDate.getMonth() + 1;
   const repeatUpToFullYear = repeatUpTo && repeatUpTo.getFullYear();
   const weekDaysNames = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
-  const until = `${repeatUpToFullYear}${month}${day}T000000Z`;
+  const until = repeatUpToFullYear
+    ? `${repeatUpToFullYear}${month}${day}T000000Z`
+    : '';
 
   const recurrenceYearlyBaseObj: Recurrence = {
     frequency: repeatType,
@@ -128,6 +130,15 @@ const createCalendarEventObj = (
 
   if (!isRepeatable) {
     return eventObj;
+  }
+
+  if (!repeatForever) {
+    const recurrenceObj = buildRecurrenceObj(
+      dueDate,
+      repeatType,
+      repeatUpTo,
+      repeatForever
+    );
   }
 
   const recurrenceObj = buildRecurrenceObj(

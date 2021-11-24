@@ -1,5 +1,7 @@
 import { gql, useQuery } from '@apollo/client';
 import { useAuth0 } from '@auth0/auth0-react';
+import { endOfMonth } from 'date-fns';
+import startOfMonth from 'date-fns/startOfMonth';
 import { StringifyOptions } from 'querystring';
 import React, { useEffect, useState } from 'react';
 import { groupBy } from '../../../../helpers/groupBy';
@@ -16,14 +18,16 @@ interface PieChartConfig {
   datasets: ChartDataSet[];
 }
 interface BillsListFromMonth {
-  category: StringifyOptions;
-  billValue: number;
-  id: string;
-  billName: string;
+  value: number;
+  bill: {
+    category: string;
+    billName: string;
+  };
 }
 
 interface ResponseBillFromMonth {
-  bills: BillsListFromMonth[];
+  payments: BillsListFromMonth[];
+  paymentsAggregate: { aggregate: { sum: { value: number } } };
 }
 
 interface BillsGroupedByCategory {
@@ -31,18 +35,20 @@ interface BillsGroupedByCategory {
 }
 
 const getBillsThisMonth = gql`
-  query GetBillsThisMonth($userId: String!) {
-    bills(
-      where: {
-        repeatForever: { _eq: true }
-        repeatType: { _eq: MONTHLY }
-        userId: { _eq: $userId }
+  query GetBillsThisMonth($startDate: date, $endDate: date) {
+    payments(where: { date: { _gte: $startDate, _lte: $endDate } }) {
+      bill {
+        category
+        billName
       }
-    ) {
-      category
-      billValue
-      id
-      billName
+      value
+    }
+    paymentsAggregate(where: { date: { _gte: $startDate, _lte: $endDate } }) {
+      aggregate {
+        sum {
+          value
+        }
+      }
     }
   }
 `;
@@ -62,8 +68,8 @@ const chartColors = [
 ];
 
 const getCategoriesFromBillList = (bills: BillsListFromMonth[]): string[] => {
-  const categoriesSet = new Set(bills.map(bill => bill.category));
-  return Array.from(categoriesSet) as string[];
+  const categoriesSet = new Set(bills.map(bill => bill.bill.category));
+  return Array.from(categoriesSet);
 };
 
 const calculateTotalValueByCategory = (
@@ -73,7 +79,7 @@ const calculateTotalValueByCategory = (
   const totalByCategory = categories.map(category => {
     const bills = billsGroupedBy[category];
     return bills
-      .map(bill => bill.billValue)
+      .map(bill => bill.value)
       .reduce((acc, current) => acc + current);
   });
   return totalByCategory;
@@ -83,7 +89,7 @@ const buildChartConfig = (bills: BillsListFromMonth[]): PieChartConfig => {
   const categories = getCategoriesFromBillList(bills);
   const billsGroupedByCategory = groupBy(
     bills,
-    (bill: BillsListFromMonth) => bill.category
+    (bill: BillsListFromMonth) => bill.bill.category
   ) as BillsGroupedByCategory;
   const totalByCategory = calculateTotalValueByCategory(
     categories,
@@ -104,19 +110,20 @@ const buildChartConfig = (bills: BillsListFromMonth[]): PieChartConfig => {
   } as PieChartConfig;
   return config;
 };
+
 const useChartConfig = () => {
-  const { user } = useAuth0();
-  const { loading, data } = useQuery<ResponseBillFromMonth | undefined>(
-    getBillsThisMonth,
-    {
-      variables: { userId: user?.sub },
-    }
-  );
+  const currentDate = new Date();
+  const { loading, data } = useQuery<ResponseBillFromMonth>(getBillsThisMonth, {
+    variables: {
+      startDate: startOfMonth(currentDate),
+      endDate: endOfMonth(currentDate),
+    },
+  });
   const [chartConfig, setChartConfig] = useState<PieChartConfig | null>(null);
 
   useEffect(() => {
-    if (data?.bills && data.bills?.length > 0) {
-      setChartConfig(buildChartConfig(data.bills));
+    if (data?.payments && data.payments?.length > 0) {
+      setChartConfig(buildChartConfig(data.payments));
     }
   }, [data]);
 

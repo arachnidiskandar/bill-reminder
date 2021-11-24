@@ -6,8 +6,8 @@ import {
   BillFormValues,
   BillRepeatType,
   IBill,
-} from '../../../../interfaces/Bill';
-import useCalendar from '../../../../hooks/useCalendar';
+} from '../../../../../interfaces/Bill';
+import useCalendar from '../../../../../hooks/useCalendar';
 
 const CREATE_BILL = gql`
   mutation CrateBillMutation($object: Bills_insert_input!, $auth0Id: String!) {
@@ -28,7 +28,7 @@ export interface BillObject {
   isRepeatable: boolean;
   repeatType: BillRepeatType;
   dueDate: Date;
-  repeatUpTo: Date;
+  repeatUpTo: Date | null;
   billValue: number;
   repeatForever: boolean;
   observations: string | null;
@@ -71,12 +71,10 @@ const useCreateBill = () => {
     const eventCalendarId = await createBillEventOnCalendar(calendarEvent);
     const userId = user?.sub;
     const bill = createBillObject(formValues, userId, eventCalendarId);
-    console.log(bill);
     try {
       await mutate({
         variables: {
           object: bill,
-          auth0Id: userId,
         },
       });
       toast({

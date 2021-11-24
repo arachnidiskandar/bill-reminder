@@ -1,17 +1,15 @@
 import React from 'react';
 import { gql, useMutation } from '@apollo/client';
-import { useAuth0 } from '@auth0/auth0-react';
 import { useToast } from '@chakra-ui/react';
 
-import useNotification from '../../../../hooks/useNotification';
 import {
   BillFormValues,
   BillRepeatType,
   IBill,
-} from '../../../../interfaces/Bill';
-import useStore, { BillsState } from '../../../../store/useStore';
-import useCalendar from '../../../../hooks/useCalendar';
-import { BillObject } from '../CreateBillModal/hooks';
+} from '../../../../../../interfaces/Bill';
+import useCalendar from '../../../../../../hooks/useCalendar';
+import useBillsStore, { BillsState } from '../../../billsStore';
+import { PaymentBill } from '../../../queries';
 
 const UPDATE_BILL = gql`
   mutation MyMutation($id: uuid!, $_set: Bills_set_input) {
@@ -26,7 +24,7 @@ export interface EditBillObject {
   isRepeatable: boolean;
   repeatType: BillRepeatType;
   dueDate: Date;
-  repeatUpTo: Date;
+  repeatUpTo: Date | null;
   billValue: number;
   repeatForever: boolean;
   observations: string | null;
@@ -62,15 +60,15 @@ const setBillsSelector = (state: BillsState) => state.setBills;
 
 const useEditBill = () => {
   const [mutate, { error, data, loading }] = useMutation<{
-    id: IBill;
+    id: string;
   }>(UPDATE_BILL);
   const toast = useToast();
-  const bills = useStore(billSelector);
-  const setBills = useStore(setBillsSelector);
+  const bills = useBillsStore(billSelector);
+  const setBills = useBillsStore(setBillsSelector);
   const { createCalendarEventObj, updateBillEventOnCalendar } = useCalendar();
 
   const editBill = async (
-    billToEdit: IBill | null,
+    billToEdit: IBill | undefined,
     formValues: BillFormValues,
     closeModalMethod: () => void
   ) => {
@@ -79,12 +77,13 @@ const useEditBill = () => {
     }
     const eventId = billToEdit.eventCalendarId ?? ('' as string);
     const calendarEvent = createCalendarEventObj(formValues);
-    const eventCalendarId = await updateBillEventOnCalendar(
-      calendarEvent,
-      eventId
-    );
+    // const eventCalendarId = await updateBillEventOnCalendar(
+    //   calendarEvent,
+    //   eventId
+    // );
     const bill = createBillObject(formValues);
-    const updatedBills = getUpdatedBillsArray(billToEdit.id, bills, bill);
+    // const updatedBills = getUpdatedBillsArray(billToEdit.id, bills, bill);
+    console.log(bill);
     try {
       await mutate({
         variables: {
@@ -92,7 +91,7 @@ const useEditBill = () => {
           _set: bill,
         },
       });
-      setBills(updatedBills);
+      // setBills(updatedBills);
       toast({
         title: 'Conta editada',
         description: 'Sua conta foi editada com sucesso.',

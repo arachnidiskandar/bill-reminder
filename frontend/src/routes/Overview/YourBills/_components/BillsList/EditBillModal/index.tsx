@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -12,44 +12,32 @@ import {
   Spinner,
 } from '@chakra-ui/react';
 import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
-import RadioGroupInput from '../../../../components/RadioGroup';
-import NumberInput from '../../../../components/NumberInput';
-import { BillFormValues } from '../../../../interfaces/Bill';
-import useCreateBill from './hooks';
-import TextInput from '../../../../components/TextInput';
-import DatePicker from '../../../../components/DatePicker';
-import SelectCreatable from '../../../../components/SelectCreatable';
-import TextAreaInput from '../../../../components/TextAreaInput';
+import RadioGroupInput from '../../../../../../components/RadioGroup';
+import NumberInput from '../../../../../../components/NumberInput';
+import { BillFormValues } from '../../../../../../interfaces/Bill';
+import TextInput from '../../../../../../components/TextInput';
+import DatePicker from '../../../../../../components/DatePicker';
+import useEditBill from './hooks';
+import SelectCreatable from '../../../../../../components/SelectCreatable';
+import { options } from '../../CreateBillModal';
+import TextAreaInput from '../../../../../../components/TextAreaInput';
+import useBillsStore, { BillsState } from '../../../billsStore';
 
-type CreateModalProps = {
-  isOpen: boolean;
-  toggleMethod: () => void;
-};
+const idBillToEditSelector = (state: BillsState) => state.paymentBillToEdit;
+const closeModalEditSelector = (state: BillsState) => state.closeModalEdit;
 
-export const options = [
-  { value: 'food', label: 'Comida' },
-  { value: 'credit card', label: 'Cartão de crédito' },
-  { value: 'gift', label: 'Presente' },
-  { value: 'pets', label: 'Pets' },
-  { value: 'taxes', label: 'Imposto' },
-  { value: 'vacation', label: 'Férias' },
-  { value: 'shopping', label: 'Compras' },
-  { value: 'utilities', label: 'Utilidades' },
-  { value: 'vehicle ', label: 'Veículo' },
-];
-
-const CreateBillModal = ({ isOpen, toggleMethod }: CreateModalProps) => {
+const EditBillModal = () => {
+  const billToEdit = useBillsStore(idBillToEditSelector);
+  const closeModalEdit = useBillsStore(closeModalEditSelector);
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
+    setValue,
+    getValues,
     control,
   } = useForm<BillFormValues>();
-  const { loading, createBill } = useCreateBill();
-
-  const onSubmit: SubmitHandler<BillFormValues> = async (
-    form: BillFormValues
-  ) => void createBill(form, toggleMethod);
+  const { editBill, loading } = useEditBill();
 
   const isRepeatableFieldValue = useWatch({
     control,
@@ -61,12 +49,36 @@ const CreateBillModal = ({ isOpen, toggleMethod }: CreateModalProps) => {
     name: 'repeatForever',
     defaultValue: false,
   });
+
+  useEffect(() => {
+    if (!billToEdit) {
+      return;
+    }
+    setValue('billName', billToEdit.billName);
+    setValue('billValue', billToEdit.billValue);
+    setValue('repeatType', billToEdit.repeatType);
+    setValue('dueDate', new Date(billToEdit.dueDate));
+    setValue('categoryObject.value', billToEdit.category ?? '');
+    setValue('categoryObject.label', billToEdit.category ?? '');
+    setValue(
+      'repeatUpTo',
+      !billToEdit.repeatForever ? new Date(billToEdit.repeatUpTo) : null
+    );
+    setValue('isRepeatable', billToEdit.isRepeatable);
+    setValue('repeatForever', billToEdit.repeatForever);
+    setValue('observations', billToEdit.observations ?? null);
+  }, [billToEdit, setValue]);
+
+  const onSubmit: SubmitHandler<BillFormValues> = async (
+    form: BillFormValues
+  ) => void editBill(billToEdit, form, closeModalEdit);
+
   return (
     <>
-      <Modal isOpen={isOpen} onClose={toggleMethod}>
+      <Modal isOpen={!!billToEdit} onClose={closeModalEdit}>
         <ModalOverlay />
         <ModalContent ml={3} mr={3}>
-          <ModalHeader>Criar Conta</ModalHeader>
+          <ModalHeader>Editar Conta</ModalHeader>
           <ModalCloseButton />
           <form onSubmit={handleSubmit(onSubmit)}>
             <ModalBody>
@@ -110,10 +122,11 @@ const CreateBillModal = ({ isOpen, toggleMethod }: CreateModalProps) => {
                   <RadioGroupInput
                     register={register}
                     fieldName="repeatType"
-                    label="Qual a recorrencia da conta?"
+                    label="Qual a recorrência da conta?"
                     errorObject={errors.repeatType}
                     required
                     options={['WEEKLY', 'MONTHLY', 'ANNUALLY']}
+                    defaultValue={getValues('repeatType')}
                   />
                   <DatePicker
                     fieldName="repeatUpTo"
@@ -137,11 +150,15 @@ const CreateBillModal = ({ isOpen, toggleMethod }: CreateModalProps) => {
               />
             </ModalBody>
             <ModalFooter>
-              <Button onClick={toggleMethod} variant="ghost" mr={3}>
+              <Button onClick={closeModalEdit} variant="ghost" mr={3}>
                 Cancelar
               </Button>
-              <Button type="submit" colorScheme="green" disabled={loading}>
-                {loading ? <Spinner /> : 'Criar Conta'}
+              <Button
+                type="submit"
+                colorScheme="green"
+                disabled={!isDirty || loading}
+              >
+                {loading ? <Spinner /> : 'Editar Conta'}
               </Button>
             </ModalFooter>
           </form>
@@ -151,4 +168,4 @@ const CreateBillModal = ({ isOpen, toggleMethod }: CreateModalProps) => {
   );
 };
 
-export default CreateBillModal;
+export default EditBillModal;

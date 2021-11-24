@@ -1,48 +1,23 @@
 import { gql, useQuery } from '@apollo/client';
 import { useAuth0 } from '@auth0/auth0-react';
-import {
-  addMonths,
-  eachMonthOfInterval,
-  isBefore,
-  startOfDay,
-  startOfMonth,
-} from 'date-fns';
-import { endOfMonth, isAfter } from 'date-fns/esm';
-import { StringifyOptions } from 'querystring';
-import React, { useEffect, useMemo, useState } from 'react';
+import { addMonths, eachMonthOfInterval, startOfMonth } from 'date-fns';
+import { endOfMonth } from 'date-fns/esm';
+import { useEffect } from 'react';
+import { getMonthName } from '../../../../helpers/DateHelpers';
 import { groupBy } from '../../../../helpers/groupBy';
-
-interface ChartDataSet {
-  label: string;
-  data: number[];
-  backgroundColor: string[];
-  borderColor: string[];
-  borderWidth: 1;
-}
-interface PieChartConfig {
-  labels: string[];
-  datasets: ChartDataSet[];
-}
-interface UpcomingBill {
-  value: number;
-  date: Date;
-  billId: string;
-  Bill: {
-    category: string;
-  };
-}
-
-interface ResponseUpcomingBills {
-  Payments: UpcomingBill[];
-}
-
-interface BillsGroupedByCategory {
-  [key: string]: UpcomingBill[];
-}
+import useChartStore, { filterBillsList } from './chartStore';
+import {
+  BillsGroupedByCategory,
+  ChartConfig,
+  ChartState,
+  ResponseUpcomingBills,
+  UpcomingBill,
+  VisualizationType,
+} from './interfaces';
 
 const getUpcomingBills = gql`
   query getUpcomingBills($startDate: date, $endDate: date) {
-    Payments(
+    payments(
       where: {
         Bill: { repeatForever: { _eq: true }, repeatType: { _eq: MONTHLY } }
         date: { _gt: $startDate, _lte: $endDate }
@@ -90,7 +65,7 @@ const calculateTotalValueByCategory = (
   return totalByCategory;
 };
 
-const buildChartConfig = (bills: UpcomingBill[]): PieChartConfig => {
+const buildPieChartConfig = (bills: UpcomingBill[]): ChartConfig => {
   const categories = getCategoriesFromBillList(bills);
   const billsGroupedByCategory = groupBy(
     bills,
@@ -105,29 +80,50 @@ const buildChartConfig = (bills: UpcomingBill[]): PieChartConfig => {
     labels: categories,
     datasets: [
       {
-        label: '# teste',
         data: totalByCategory,
         backgroundColor: chartColors,
         borderColor: chartColors,
         borderWidth: 1,
       },
     ],
-  } as PieChartConfig;
+  } as ChartConfig;
   return config;
 };
 
-const filterBillsList = (
+const buildBarChartConfig = (
   bills: UpcomingBill[],
-  dateToFilter: Date
-): UpcomingBill[] => {
-  return bills.filter(bill => {
-    const billDate = new Date(bill.date);
-    return (
-      isAfter(billDate, startOfDay(dateToFilter)) &&
-      isBefore(billDate, endOfMonth(dateToFilter))
-    );
-  });
+  dateRange: Date[]
+): ChartConfig => {
+  const totalByMonth = dateRange.map(date =>
+    filterBillsList(bills, date).reduce(
+      (acc, current) => acc + current.value,
+      0
+    )
+  );
+  const monthShortNames = dateRange.map(month => getMonthName(month, 'short'));
+
+  const config = {
+    labels: monthShortNames,
+    datasets: [
+      {
+        data: totalByMonth,
+        backgroundColor: ['#11884D'],
+        borderColor: ['#11884D'],
+        borderWidth: 1,
+      },
+    ],
+  } as ChartConfig;
+  return config;
 };
+
+const buildChartConfig = (
+  bills: UpcomingBill[],
+  type: VisualizationType,
+  dateRange: Date[]
+): ChartConfig =>
+  type === VisualizationType.BY_CATEGORY
+    ? buildPieChartConfig(bills)
+    : buildBarChartConfig(bills, dateRange);
 
 const getDatesSixMonthsFromNow = (start: Date, end: Date) =>
   eachMonthOfInterval({
@@ -135,49 +131,71 @@ const getDatesSixMonthsFromNow = (start: Date, end: Date) =>
     end,
   });
 
-export const getMonthName = (date: Date, type: 'long' | 'short') =>
-  date.toLocaleString('pt-BR', { month: type });
+const chartConfigSelector = (state: ChartState) => state.chartConfig;
+const typeVisualizationSelector = (state: ChartState) =>
+  state.typeVisualization;
+const filteredBillsSelector = (state: ChartState) => state.filteredBills;
+const setChartConfigSelector = (state: ChartState) => state.setChartConfig;
+const setBillsSelector = (state: ChartState) => state.setBills;
+const setMonthFilterSelector = (state: ChartState) => state.setMonthFilter;
+const setTypeVisualizationSelector = (state: ChartState) =>
+  state.setTypeVisualization;
 
-const useChartConfig = () => {
-  const startMonthDate = addMonths(startOfMonth(new Date()), 1);
-  const endDateSixMonthsFromNow = addMonths(startOfMonth(new Date()), 7);
-  // TODO: INFINITE LOOP PUTTING THIS ON ARRAY OF DEPENDENCIES
+const createDateQueryFilters = (future: boolean): Date[] => {
+  const currentDate = new Date();
+  const start = startOfMonth(addMonths(currentDate, future ? 1 : -6));
+  const end = endOfMonth(addMonths(currentDate, future ? 6 : -1));
+  return [start, end];
+};
+
+const useChartConfig = (future: boolean) => {
+  const [startMonthDate, endDateSixMonthsFromNow] =
+    createDateQueryFilters(future);
   const dateRangeListFilter = getDatesSixMonthsFromNow(
     startMonthDate,
     endDateSixMonthsFromNow
   );
 
-  const { user } = useAuth0();
-  const [monthFilter, setMonthFilter] = useState<number | null>(0);
-  const [filteredBills, setFilteredBills] = useState<UpcomingBill[]>([]);
+  const chartConfig = useChartStore(chartConfigSelector);
+  const typeVisualization = useChartStore(typeVisualizationSelector);
+  const filteredBills = useChartStore(filteredBillsSelector);
+  const setChartConfig = useChartStore(setChartConfigSelector);
+  const setTypeVisualization = useChartStore(setTypeVisualizationSelector);
+  const setMonthFilter = useChartStore(setMonthFilterSelector);
+  const setBills = useChartStore(setBillsSelector);
+
   const { loading, data } = useQuery<ResponseUpcomingBills | undefined>(
     getUpcomingBills,
     {
       variables: {
-        userId: user?.sub,
         startDate: startMonthDate,
         endDate: endDateSixMonthsFromNow,
       },
     }
   );
-  const [chartConfig, setChartConfig] = useState<PieChartConfig | null>(null);
 
   useEffect(() => {
-    if (data?.Payments && data.Payments?.length > 0) {
-      const billsList =
-        typeof monthFilter === 'number'
-          ? filterBillsList(data.Payments, dateRangeListFilter[monthFilter])
-          : data.Payments;
-      console.log(billsList);
-      setFilteredBills(billsList);
+    if (data?.payments && data.payments?.length > 0) {
+      setBills(data?.payments);
+      setMonthFilter(null);
     }
-  }, [data, monthFilter]);
+  }, [data, setBills, setMonthFilter]);
 
   useEffect(() => {
-    setChartConfig(buildChartConfig(filteredBills));
-  }, [filteredBills]);
+    setChartConfig(
+      buildChartConfig(filteredBills, typeVisualization, dateRangeListFilter)
+    );
+  }, [filteredBills, typeVisualization, setChartConfig]);
 
-  return { chartConfig, loading, data, setMonthFilter, dateRangeListFilter };
+  return {
+    chartConfig,
+    loading,
+    data,
+    setMonthFilter,
+    dateRangeListFilter,
+    typeVisualization,
+    setTypeVisualization,
+  };
 };
 
 export default useChartConfig;

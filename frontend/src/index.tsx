@@ -3,7 +3,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Auth0Provider } from '@auth0/auth0-react';
 import App from './App';
-import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 import theme from './theme';
 import AuthorizedApolloProvider from './graphql';
 
@@ -26,5 +25,3 @@ ReactDOM.render(
   </React.StrictMode>,
   document.getElementById('root')
 );
-
-serviceWorkerRegistration.register();

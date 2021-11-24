@@ -1,8 +1,8 @@
 import { gql, useMutation } from '@apollo/client';
 import { useToast } from '@chakra-ui/react';
 import React from 'react';
-import ModalAlert from '../../../../components/ModalAlert';
-import useStore, { BillsState } from '../../../../store/useStore';
+import ModalAlert from '../../../../../../components/ModalAlert';
+import useBillsStore, { BillsState } from '../../../billsStore';
 
 const idBillDeleteSelector = (state: BillsState) => state.idToDelete;
 const closeDeleteModalSelector = (state: BillsState) => state.closeModalDelete;
@@ -17,9 +17,9 @@ const DELETE_BILL = gql`
 `;
 
 const DeleteBillModal = () => {
-  const idBillToDelete = useStore(idBillDeleteSelector);
-  const closeModalDelete = useStore(closeDeleteModalSelector);
-  const onDeleteBill = useStore(deleteBillSelector);
+  const idBillToDelete = useBillsStore(idBillDeleteSelector);
+  const closeModalDelete = useBillsStore(closeDeleteModalSelector);
+  const onDeleteBill = useBillsStore(deleteBillSelector);
   const toast = useToast();
   const [mutate] = useMutation<{ id: string }>(DELETE_BILL);
 

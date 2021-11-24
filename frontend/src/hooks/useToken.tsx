@@ -23,7 +23,7 @@ const useToken = () => {
     if (!isAuthenticated) {
       localStorage.removeItem('userId');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, getIdTokenClaims, user, token]);
 
   return { token, isLoading };
 };
