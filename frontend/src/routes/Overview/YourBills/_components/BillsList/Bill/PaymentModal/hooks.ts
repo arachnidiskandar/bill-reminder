@@ -35,12 +35,11 @@ const usePayBill = () => {
     billValue?: number
   ) => {
     const queryVariables = createQueryVariables(paymentId, billValue);
-    deleteBill(paymentId);
+
     try {
       await mutate({
         variables: queryVariables,
       });
-
       toast({
         title: 'Conta Paga',
         description: 'Sua conta foi marcada como paga.',
@@ -48,7 +47,7 @@ const usePayBill = () => {
         duration: 3000,
         isClosable: true,
       });
-
+      deleteBill(paymentId);
       closeModalMethod();
     } catch (e: any) {
       toast({

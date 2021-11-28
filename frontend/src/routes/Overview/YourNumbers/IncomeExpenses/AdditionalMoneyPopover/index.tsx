@@ -18,12 +18,15 @@ import {
 import React, { useState } from 'react';
 import { useSalary } from './hooks';
 
-interface SalaryPopover {
+interface AdditionalMoneyPopover {
   setSalaryCb: (salary: number | undefined) => void;
   triggerElement: React.ReactNode;
 }
 
-const SalaryPopover = ({ setSalaryCb, triggerElement }: SalaryPopover) => {
+const AdditionalMoneyPopover = ({
+  setSalaryCb,
+  triggerElement,
+}: AdditionalMoneyPopover) => {
   const [isSalaryInvalid, setIsSalaryInvalid] = useState(false);
   const [salary, setSalary] = useState<number | undefined>();
   const { onOpen, onClose, isOpen } = useDisclosure();
@@ -59,7 +62,9 @@ const SalaryPopover = ({ setSalaryCb, triggerElement }: SalaryPopover) => {
         <PopoverCloseButton />
         <PopoverBody>
           <Box mt={4}>
-            <FormLabel>Digite o valor do seu salário</FormLabel>
+            <FormLabel>
+              Digite o dinheiro extra que você recebeu esse mês
+            </FormLabel>
             <NumberInput
               ref={initialFocusRef}
               defaultValue={salary}
@@ -90,4 +95,4 @@ const SalaryPopover = ({ setSalaryCb, triggerElement }: SalaryPopover) => {
   );
 };
 
-export default SalaryPopover;
+export default AdditionalMoneyPopover;

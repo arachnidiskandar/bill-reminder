@@ -1,40 +1,13 @@
-import React from 'react';
-import { gql, useMutation } from '@apollo/client';
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import React, { useState } from 'react';
+import { useMutation } from '@apollo/client';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useToast } from '@chakra-ui/react';
-import {
-  BillFormValues,
-  BillRepeatType,
-  IBill,
-} from '../../../../../interfaces/Bill';
+import { BillFormValues } from '../../../../../interfaces/Bill';
 import useCalendar from '../../../../../hooks/useCalendar';
-
-const CREATE_BILL = gql`
-  mutation CrateBillMutation($object: Bills_insert_input!, $auth0Id: String!) {
-    insert_Users_one(
-      object: { auth0Id: $auth0Id }
-      on_conflict: { constraint: Users_auth0_id_key, update_columns: [] }
-    ) {
-      id
-    }
-    insert_Bills_one(object: $object) {
-      id
-    }
-  }
-`;
-export interface BillObject {
-  userId: string;
-  billName: string;
-  isRepeatable: boolean;
-  repeatType: BillRepeatType;
-  dueDate: Date;
-  repeatUpTo: Date | null;
-  billValue: number;
-  repeatForever: boolean;
-  observations: string | null;
-  eventCalendarId: string | null;
-  category: string | undefined;
-}
+import { CreatePayments, CREATE_BILL } from './queries';
+import { BillObject, PaymentObject } from './interfaces';
 
 const createBillObject = (
   formValues: BillFormValues,
@@ -56,9 +29,17 @@ const createBillObject = (
 };
 
 const useCreateBill = () => {
-  const [mutate, { error, data, loading }] = useMutation<{
-    savedBill: IBill;
-  }>(CREATE_BILL);
+  const [loading, setLoading] = useState(false);
+  const [mutateBill, { error }] = useMutation<
+    any,
+    { object: BillObject | null; auth0Id: string | undefined }
+  >(CREATE_BILL);
+  const [mutatePayments] = useMutation<
+    {
+      id: string;
+    },
+    PaymentObject
+  >(CreatePayments);
   const toast = useToast();
   const { user } = useAuth0();
   const { createCalendarEventObj, createBillEventOnCalendar } = useCalendar();
@@ -67,14 +48,26 @@ const useCreateBill = () => {
     formValues: BillFormValues,
     closeModalMethod: () => void
   ) => {
+    setLoading(true);
     const calendarEvent = createCalendarEventObj(formValues);
     const eventCalendarId = await createBillEventOnCalendar(calendarEvent);
     const userId = user?.sub;
     const bill = createBillObject(formValues, userId, eventCalendarId);
     try {
-      await mutate({
+      const response = (await mutateBill({
         variables: {
           object: bill,
+          auth0Id: userId,
+        },
+      })) as any;
+
+      await mutatePayments({
+        variables: {
+          billId: response.data?.insert_Bills_one.id,
+          billValue: bill?.billValue,
+          repeatType: bill?.repeatType,
+          userId,
+          dueDate: bill?.dueDate,
         },
       });
       toast({
@@ -93,10 +86,13 @@ const useCreateBill = () => {
         duration: 3000,
         isClosable: true,
       });
+
       console.error(e);
+    } finally {
+      setLoading(false);
     }
   };
-  return { error, data, loading, createBill };
+  return { error, loading, createBill };
 };
 
 export default useCreateBill;

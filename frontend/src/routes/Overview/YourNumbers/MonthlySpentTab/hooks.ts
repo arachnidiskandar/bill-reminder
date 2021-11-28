@@ -1,10 +1,9 @@
-import { gql, useQuery } from '@apollo/client';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useQuery } from '@apollo/client';
 import { endOfMonth } from 'date-fns';
 import startOfMonth from 'date-fns/startOfMonth';
-import { StringifyOptions } from 'querystring';
 import React, { useEffect, useState } from 'react';
 import { groupBy } from '../../../../helpers/groupBy';
+import { getBillsThisMonth } from './queries';
 
 interface ChartDataSet {
   label: string;
@@ -33,25 +32,6 @@ interface ResponseBillFromMonth {
 interface BillsGroupedByCategory {
   [key: string]: BillsListFromMonth[];
 }
-
-const getBillsThisMonth = gql`
-  query GetBillsThisMonth($startDate: date, $endDate: date) {
-    payments(where: { date: { _gte: $startDate, _lte: $endDate } }) {
-      bill {
-        category
-        billName
-      }
-      value
-    }
-    paymentsAggregate(where: { date: { _gte: $startDate, _lte: $endDate } }) {
-      aggregate {
-        sum {
-          value
-        }
-      }
-    }
-  }
-`;
 
 const chartColors = [
   'rgba(255, 99, 132, 0.9)',

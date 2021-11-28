@@ -1,4 +1,5 @@
 import create from 'zustand';
+import { devtools } from 'zustand/middleware';
 import { IBill } from '../../../interfaces/Bill';
 import { PaymentBill } from './queries';
 
@@ -13,29 +14,31 @@ export interface BillsState {
   openModalEdit: (id: string) => void;
   closeModalDelete: () => void;
   closeModalEdit: () => void;
-  disablePayment: () => void;
+  setDisablePayment: (shouldDisabled: boolean) => void;
 }
 
-const useBillsStore = create<BillsState>(set => ({
-  shouldDisablePayment: false,
-  idToDelete: '',
-  paymentBillToEdit: undefined,
-  bills: [],
-  setBills: bills => set({ bills }),
-  openModalDelete: idToDelete => set({ idToDelete }),
-  openModalEdit: id =>
-    set(prevState => ({
-      paymentBillToEdit: prevState.bills.find(bill => bill.paymentId === id)
-        ?.bill,
-    })),
-  closeModalDelete: () => set({ idToDelete: '' }),
-  closeModalEdit: () => set({ paymentBillToEdit: undefined }),
-  deleteBill: id =>
-    set(prevState => ({
-      bills: prevState.bills.filter(bill => bill.paymentId !== id),
-      idToDelete: '',
-    })),
-  disablePayment: () => set({ shouldDisablePayment: true }),
-}));
+const useBillsStore = create<BillsState>(
+  devtools(set => ({
+    shouldDisablePayment: false,
+    idToDelete: '',
+    paymentBillToEdit: undefined,
+    bills: [],
+    setBills: bills => set({ bills }),
+    openModalDelete: idToDelete => set({ idToDelete }),
+    openModalEdit: id =>
+      set(prevState => ({
+        paymentBillToEdit: prevState.bills.find(bill => bill.paymentId === id)
+          ?.bill,
+      })),
+    closeModalDelete: () => set({ idToDelete: '' }),
+    closeModalEdit: () => set({ paymentBillToEdit: undefined }),
+    deleteBill: id =>
+      set(prevState => ({
+        bills: prevState.bills.filter(bill => bill.paymentId !== id),
+        idToDelete: '',
+      })),
+    setDisablePayment: shouldDisablePayment => set({ shouldDisablePayment }),
+  }))
+);
 
 export default useBillsStore;

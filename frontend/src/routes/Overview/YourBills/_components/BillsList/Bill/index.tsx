@@ -49,7 +49,7 @@ const Bill = ({ dueDate, billName, billValue, paymentId }: BillProps) => {
         </Box>
         <Box w="100%" m="0 8px">
           <Text fontSize="large">{billName}</Text>
-          <Text>{`$${billValue}`}</Text>
+          <Text>{`R$ ${billValue}`}</Text>
         </Box>
         <Menu>
           <MenuButton

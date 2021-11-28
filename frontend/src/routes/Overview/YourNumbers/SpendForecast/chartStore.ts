@@ -8,6 +8,7 @@ import {
   startOfMonth,
 } from 'date-fns';
 import create from 'zustand';
+import { devtools } from 'zustand/middleware';
 import { ChartState, UpcomingBill, VisualizationType } from './interfaces';
 
 const getDateToFilter = (index: number | null): Date | null => {
@@ -38,31 +39,33 @@ export const filterBillsList = (
   });
 };
 
-const useChartStore = create<ChartState>(set => ({
-  bills: [],
-  chartConfig: null,
-  typeVisualization: VisualizationType.BY_MONTHS,
-  filteredBills: [],
-  monthFilter: 0,
-  setChartConfig: chartConfig => set({ chartConfig }),
-  setFilteredBills: filteredBills => set({ filteredBills }),
-  setMonthFilter: monthFilter =>
-    set(prevState => ({
-      filteredBills: filterBillsList(
-        prevState.bills,
-        getDateToFilter(monthFilter)
-      ),
-      monthFilter,
-    })),
-  setTypeVisualization: typeVisualization =>
-    set(prevState => ({
-      typeVisualization,
-      filteredBills:
-        typeVisualization === 'byMonths'
-          ? prevState.bills
-          : prevState.filteredBills,
-    })),
-  setBills: bills => set({ bills }),
-}));
+const useChartStore = create<ChartState>(
+  devtools(set => ({
+    bills: [],
+    chartConfig: null,
+    typeVisualization: VisualizationType.BY_MONTHS,
+    filteredBills: [],
+    monthFilter: 0,
+    setChartConfig: chartConfig => set({ chartConfig }),
+    setFilteredBills: filteredBills => set({ filteredBills }),
+    setMonthFilter: monthFilter =>
+      set(prevState => ({
+        filteredBills: filterBillsList(
+          prevState.bills,
+          getDateToFilter(monthFilter)
+        ),
+        monthFilter,
+      })),
+    setTypeVisualization: typeVisualization =>
+      set(prevState => ({
+        typeVisualization,
+        filteredBills:
+          typeVisualization === 'byMonths'
+            ? prevState.bills
+            : prevState.filteredBills,
+      })),
+    setBills: bills => set({ bills }),
+  }))
+);
 
 export default useChartStore;

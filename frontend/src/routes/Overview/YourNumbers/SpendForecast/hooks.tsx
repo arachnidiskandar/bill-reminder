@@ -1,5 +1,4 @@
 import { gql, useQuery } from '@apollo/client';
-import { useAuth0 } from '@auth0/auth0-react';
 import { addMonths, eachMonthOfInterval, startOfMonth } from 'date-fns';
 import { endOfMonth } from 'date-fns/esm';
 import { useEffect } from 'react';
@@ -17,15 +16,10 @@ import {
 
 const getUpcomingBills = gql`
   query getUpcomingBills($startDate: date, $endDate: date) {
-    payments(
-      where: {
-        Bill: { repeatForever: { _eq: true }, repeatType: { _eq: MONTHLY } }
-        date: { _gt: $startDate, _lte: $endDate }
-      }
-    ) {
+    payments(where: { date: { _gt: $startDate, _lte: $endDate } }) {
       value
       billId
-      Bill {
+      bill {
         category
       }
       date
@@ -48,7 +42,7 @@ const chartColors = [
 ];
 
 const getCategoriesFromBillList = (bills: UpcomingBill[]): string[] => {
-  const categoriesSet = new Set(bills.map(bill => bill.Bill.category));
+  const categoriesSet = new Set(bills.map(bill => bill.bill.category));
   return Array.from(categoriesSet);
 };
 
@@ -69,7 +63,7 @@ const buildPieChartConfig = (bills: UpcomingBill[]): ChartConfig => {
   const categories = getCategoriesFromBillList(bills);
   const billsGroupedByCategory = groupBy(
     bills,
-    (bill: UpcomingBill) => bill.Bill.category
+    (bill: UpcomingBill) => bill.bill.category
   ) as BillsGroupedByCategory;
   const totalByCategory = calculateTotalValueByCategory(
     categories,

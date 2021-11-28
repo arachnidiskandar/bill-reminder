@@ -18,12 +18,13 @@ interface BillTabProps {
 }
 const billsSelector = (state: BillsState) => state.bills;
 const setBillsSelector = (state: BillsState) => state.setBills;
-const disablePaymentSelector = (state: BillsState) => state.disablePayment;
+const setDisablePaymentSelector = (state: BillsState) =>
+  state.setDisablePayment;
 
 const BillTab = ({ query, queryVariables, disablePayment }: BillTabProps) => {
   const bills = useBillsStore(billsSelector);
   const setBills = useBillsStore(setBillsSelector);
-  const disablePaymentFunction = useBillsStore(disablePaymentSelector);
+  const setDisablePayment = useBillsStore(setDisablePaymentSelector);
   const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
   const { loading, data } = useQuery<GetBillsResponse>(query, {
     variables: queryVariables,
@@ -37,9 +38,11 @@ const BillTab = ({ query, queryVariables, disablePayment }: BillTabProps) => {
 
   useEffect(() => {
     if (disablePayment) {
-      disablePaymentFunction();
+      setDisablePayment(true);
+    } else {
+      setDisablePayment(false);
     }
-  }, [disablePayment, disablePaymentFunction]);
+  }, [disablePayment, setDisablePayment]);
 
   if (loading) {
     return <SkeletonBills />;

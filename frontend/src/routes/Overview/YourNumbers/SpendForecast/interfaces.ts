@@ -13,7 +13,7 @@ export interface UpcomingBill {
   value: number;
   date: Date;
   billId: string;
-  Bill: {
+  bill: {
     category: string;
   };
 }

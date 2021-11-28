@@ -10,7 +10,6 @@ import { VisualizationType } from './interfaces';
 const SpendForecastTab = ({ future }: { future: boolean }) => {
   const {
     chartConfig,
-    loading,
     dateRangeListFilter,
     setMonthFilter,
     setTypeVisualization,

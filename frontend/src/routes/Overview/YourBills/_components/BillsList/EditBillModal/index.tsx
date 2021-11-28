@@ -8,15 +8,12 @@ import {
   ModalBody,
   ModalCloseButton,
   Button,
-  Checkbox,
   Spinner,
 } from '@chakra-ui/react';
-import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
-import RadioGroupInput from '../../../../../../components/RadioGroup';
+import { SubmitHandler, useForm } from 'react-hook-form';
 import NumberInput from '../../../../../../components/NumberInput';
 import { BillFormValues } from '../../../../../../interfaces/Bill';
 import TextInput from '../../../../../../components/TextInput';
-import DatePicker from '../../../../../../components/DatePicker';
 import useEditBill from './hooks';
 import SelectCreatable from '../../../../../../components/SelectCreatable';
 import { options } from '../../CreateBillModal';
@@ -34,21 +31,9 @@ const EditBillModal = () => {
     handleSubmit,
     formState: { errors, isDirty },
     setValue,
-    getValues,
     control,
   } = useForm<BillFormValues>();
   const { editBill, loading } = useEditBill();
-
-  const isRepeatableFieldValue = useWatch({
-    control,
-    name: 'isRepeatable',
-    defaultValue: false,
-  });
-  const isRepeatableForeverFieldValue = useWatch({
-    control,
-    name: 'repeatForever',
-    defaultValue: false,
-  });
 
   useEffect(() => {
     if (!billToEdit) {
@@ -56,16 +41,8 @@ const EditBillModal = () => {
     }
     setValue('billName', billToEdit.billName);
     setValue('billValue', billToEdit.billValue);
-    setValue('repeatType', billToEdit.repeatType);
-    setValue('dueDate', new Date(billToEdit.dueDate));
     setValue('categoryObject.value', billToEdit.category ?? '');
     setValue('categoryObject.label', billToEdit.category ?? '');
-    setValue(
-      'repeatUpTo',
-      !billToEdit.repeatForever ? new Date(billToEdit.repeatUpTo) : null
-    );
-    setValue('isRepeatable', billToEdit.isRepeatable);
-    setValue('repeatForever', billToEdit.repeatForever);
     setValue('observations', billToEdit.observations ?? null);
   }, [billToEdit, setValue]);
 
@@ -107,40 +84,6 @@ const EditBillModal = () => {
                 errorObject={errors.categoryObject?.value}
               />
 
-              <DatePicker
-                fieldName="dueDate"
-                label="Data de vencimento"
-                required
-                errorObject={errors.dueDate}
-                control={control}
-              />
-              <Checkbox my={2} {...register('isRepeatable')}>
-                Repetível
-              </Checkbox>
-              {isRepeatableFieldValue && (
-                <>
-                  <RadioGroupInput
-                    register={register}
-                    fieldName="repeatType"
-                    label="Qual a recorrência da conta?"
-                    errorObject={errors.repeatType}
-                    required
-                    options={['WEEKLY', 'MONTHLY', 'ANNUALLY']}
-                    defaultValue={getValues('repeatType')}
-                  />
-                  <DatePicker
-                    fieldName="repeatUpTo"
-                    label="Repete até o dia"
-                    required={!isRepeatableForeverFieldValue}
-                    errorObject={errors.repeatUpTo}
-                    control={control}
-                    disabled={isRepeatableForeverFieldValue}
-                  />
-                  <Checkbox my={2} {...register('repeatForever')}>
-                    Sem prazo final
-                  </Checkbox>
-                </>
-              )}
               <TextAreaInput
                 register={register}
                 fieldName="observations"
