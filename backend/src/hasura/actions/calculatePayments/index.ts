@@ -3,17 +3,16 @@ import { Request, Response } from 'express';
 import { gql } from 'graphql-request';
 import { BillRepeatType } from 'src/@types/interfaces';
 import client from 'src/graphql/client';
-
-import { getDatesBetweenByMonth, getDatesBetweenByWeek } from '../../helpers';
+import { getDatesBetweenByMonth, getDatesBetweenByWeek } from 'src/helpers';
 
 interface ICreatePaymentsArgs {
   dueDate: Date;
   billId: string;
   billValue: number;
   userId: string;
-  repeatType: BillRepeatType;
-  repeatForever: boolean;
-  repeatUpTo: string;
+  repeatType?: BillRepeatType | null;
+  repeatForever?: boolean;
+  repeatUpTo?: string;
 }
 
 interface IPaymentsList {
@@ -46,8 +45,9 @@ const createPaymentsList = (args: ICreatePaymentsArgs): IPaymentsList[] => {
     }));
   }
   if (BillRepeatType.WEEKLY === repeatType) {
-    const listOfDatesByMonth = getDatesBetweenByWeek(dueDateStartRange, endDateEndRange);
-    return listOfDatesByMonth.map((date) => ({
+    const listOfDatesByWeek = getDatesBetweenByWeek(dueDateStartRange, endDateEndRange);
+    console.log(listOfDatesByWeek);
+    return listOfDatesByWeek.map((date) => ({
       date,
       value: billValue,
       billId,
@@ -59,19 +59,18 @@ const createPaymentsList = (args: ICreatePaymentsArgs): IPaymentsList[] => {
 
 const createPaymentsAction = async (req: Request, res: Response) => {
   const params: ICreatePaymentsArgs = req.body.input;
-
   const variables = {
     objects: createPaymentsList(params),
   };
-  console.log(variables);
-  // try {
-  //   await client.request(insertFutureBills, variables);
-  //   return res.json({
-  //     success: true,
-  //   });
-  // } catch (error) {
-  //   return res.status(400).json({ message: error.message });
-  // }
+  try {
+    await client.request(insertFutureBills, variables);
+    return res.json({
+      success: true,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: error.message });
+  }
 };
 
 export default createPaymentsAction;

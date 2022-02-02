@@ -2,6 +2,9 @@
   "name": "bill-reminder-frontend",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "14.x"
+  },
   "dependencies": {
     "@ant-design/icons": "^4.6.4",
     "@apollo/client": "^3.4.13",
