@@ -1,0 +1,5 @@
+- "!include public_additional_salaries.yaml"
+- "!include public_bills.yaml"
+- "!include public_payments.yaml"
+- "!include public_repeat_type.yaml"
+- "!include public_users.yaml"

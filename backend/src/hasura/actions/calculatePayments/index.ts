@@ -1,4 +1,4 @@
-import { addYears, endOfDay, endOfToday, lastDayOfMonth, setDate } from 'date-fns';
+import { addYears, endOfDay, endOfToday, isPast, lastDayOfMonth, setDate } from 'date-fns';
 import { Request, Response } from 'express';
 import { gql } from 'graphql-request';
 import { BillRepeatType } from 'src/@types/interfaces';
@@ -20,11 +20,13 @@ interface IPaymentsList {
   value: number;
   billId: string;
   userId: string;
+  isPaid: boolean;
+  isDelayed: boolean;
 }
 
 const insertFutureBills = gql`
   mutation MyMutation($objects: [payments_insert_input!]!) {
-    insert_payments(objects: $objects, on_conflict: { constraint: Payments_pkey }) {
+    insert_payments(objects: $objects, on_conflict: { constraint: payments_pkey }) {
       affected_rows
     }
   }
@@ -42,19 +44,22 @@ const createPaymentsList = (args: ICreatePaymentsArgs): IPaymentsList[] => {
       value: billValue,
       billId,
       userId,
+      isPaid: false,
+      isDelayed: isPast(date),
     }));
   }
   if (BillRepeatType.WEEKLY === repeatType) {
     const listOfDatesByWeek = getDatesBetweenByWeek(dueDateStartRange, endDateEndRange);
-    console.log(listOfDatesByWeek);
     return listOfDatesByWeek.map((date) => ({
       date,
       value: billValue,
       billId,
       userId,
+      isPaid: false,
+      isDelayed: isPast(date),
     }));
   }
-  return [{ date: dueDate, billId, userId, value: billValue }];
+  return [{ date: dueDate, billId, userId, value: billValue, isPaid: false, isDelayed: isPast(new Date(dueDate)) }];
 };
 
 const createPaymentsAction = async (req: Request, res: Response) => {

@@ -1,0 +1,9 @@
+table:
+  name: repeat_type
+  schema: public
+select_permissions:
+- permission:
+    allow_aggregations: true
+    columns: []
+    filter: {}
+  role: user

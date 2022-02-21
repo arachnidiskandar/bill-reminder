@@ -1,6 +1,13 @@
-actions: []
+actions:
+- name: create_payments
+  definition:
+    kind: synchronous
+    handler: http://host.docker.internal:4000/hasura//create-payments
+  permissions:
+  - role: user
 custom_types:
   enums: []
   input_objects: []
-  objects: []
+  objects:
+  - name: SampleOutput
   scalars: []

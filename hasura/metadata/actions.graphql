@@ -1,0 +1,16 @@
+type Mutation {
+  create_payments(
+    billId: uuid!
+    dueDate: date!
+    userId: uuid!
+    repeatType: String
+    billValue: numeric
+    repeatForever: Boolean
+    repeatUpTo: date
+  ): SampleOutput
+}
+
+type SampleOutput {
+  success: Boolean!
+}
+

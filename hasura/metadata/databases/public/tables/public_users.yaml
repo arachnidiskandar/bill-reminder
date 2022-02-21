@@ -1,0 +1,47 @@
+table:
+  name: users
+  schema: public
+configuration:
+  custom_column_names: {}
+  custom_root_fields:
+    select_aggregate: userAggregate
+array_relationships:
+- name: additionalSalary
+  using:
+    manual_configuration:
+      column_mapping:
+        id: user_id
+      insertion_order: null
+      remote_table:
+        name: additional_salaries
+        schema: public
+insert_permissions:
+- permission:
+    backend_only: false
+    check:
+      id:
+        _eq: X-Hasura-User-Id
+    columns:
+    - salary
+  role: user
+select_permissions:
+- permission:
+    allow_aggregations: true
+    columns:
+    - id
+    - password
+    - salary
+    - username
+    filter:
+      id:
+        _eq: X-Hasura-User-Id
+  role: user
+update_permissions:
+- permission:
+    check: null
+    columns:
+    - salary
+    filter:
+      id:
+        _eq: X-Hasura-User-Id
+  role: user

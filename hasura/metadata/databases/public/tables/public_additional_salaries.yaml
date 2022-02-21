@@ -1,0 +1,52 @@
+table:
+  name: additional_salaries
+  schema: public
+configuration:
+  custom_column_names:
+    user_id: userId
+  custom_root_fields:
+    select_aggregate: additionalSalaries_aggregate
+insert_permissions:
+- permission:
+    backend_only: false
+    check:
+      user_id:
+        _eq: X-Hasura-User-Id
+    columns:
+    - date
+    - id
+    - user_id
+    - value
+  role: user
+select_permissions:
+- permission:
+    allow_aggregations: true
+    columns:
+    - date
+    - value
+    - id
+    - user_id
+    filter:
+      user_id:
+        _eq: X-Hasura-User-Id
+  role: user
+update_permissions:
+- permission:
+    check:
+      id:
+        _eq: X-Hasura-User-Id
+    columns:
+    - id
+    - date
+    - value
+    - user_id
+    filter:
+      user_id:
+        _eq: X-Hasura-User-Id
+  role: user
+delete_permissions:
+- permission:
+    filter:
+      user_id:
+        _eq: X-Hasura-User-Id
+  role: user

@@ -1,0 +1,89 @@
+table:
+  name: bills
+  schema: public
+configuration:
+  custom_column_names:
+    bill_name: billName
+    bill_value: billValue
+    due_date: dueDate
+    event_calendar_id: eventCalendarId
+    is_repeatable: isRepeatable
+    repeat_forever: repeatForever
+    repeat_type: repeatType
+    repeat_up_to: repeatUpTo
+    user_id: userId
+  custom_root_fields: {}
+object_relationships:
+- name: user
+  using:
+    manual_configuration:
+      column_mapping:
+        user_id: id
+      insertion_order: null
+      remote_table:
+        name: users
+        schema: public
+insert_permissions:
+- permission:
+    backend_only: false
+    check:
+      user_id:
+        _eq: X-Hasura-User-Id
+    columns:
+    - bill_name
+    - bill_value
+    - category
+    - due_date
+    - event_calendar_id
+    - is_repeatable
+    - observations
+    - repeat_forever
+    - repeat_type
+    - repeat_up_to
+    - user_id
+  role: user
+select_permissions:
+- permission:
+    allow_aggregations: true
+    columns:
+    - bill_name
+    - bill_value
+    - category
+    - due_date
+    - event_calendar_id
+    - id
+    - is_repeatable
+    - observations
+    - repeat_forever
+    - repeat_type
+    - repeat_up_to
+    - user_id
+    filter:
+      user_id:
+        _eq: X-Hasura-User-Id
+  role: user
+update_permissions:
+- permission:
+    check: null
+    columns:
+    - bill_name
+    - bill_value
+    - category
+    - due_date
+    - event_calendar_id
+    - is_repeatable
+    - observations
+    - repeat_forever
+    - repeat_type
+    - repeat_up_to
+    - user_id
+    filter:
+      user_id:
+        _eq: X-Hasura-User-Id
+  role: user
+delete_permissions:
+- permission:
+    filter:
+      user_id:
+        _eq: X-Hasura-User-Id
+  role: user

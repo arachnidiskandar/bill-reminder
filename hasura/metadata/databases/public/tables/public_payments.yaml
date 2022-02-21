@@ -1,0 +1,73 @@
+table:
+  name: payments
+  schema: public
+configuration:
+  custom_column_names:
+    bill_id: billId
+    is_delayed: isDelayed
+    is_paid: isPaid
+    user_id: userId
+  custom_root_fields:
+    select_aggregate: paymentsAggregate
+object_relationships:
+- name: bill
+  using:
+    manual_configuration:
+      column_mapping:
+        bill_id: id
+      insertion_order: null
+      remote_table:
+        name: bills
+        schema: public
+insert_permissions:
+- permission:
+    backend_only: false
+    check:
+      bill:
+        user_id:
+          _eq: X-Hasura-User-Id
+    columns:
+    - bill_id
+    - date
+    - is_delayed
+    - is_paid
+    - value
+  role: user
+select_permissions:
+- permission:
+    allow_aggregations: true
+    columns:
+    - bill_id
+    - date
+    - id
+    - is_delayed
+    - is_paid
+    - value
+    filter:
+      bill:
+        user_id:
+          _eq: X-Hasura-User-Id
+  role: user
+update_permissions:
+- permission:
+    check:
+      bill:
+        user_id:
+          _eq: X-Hasura-User-Id
+    columns:
+    - date
+    - is_delayed
+    - is_paid
+    - value
+    filter:
+      bill:
+        user_id:
+          _eq: X-Hasura-User-Id
+  role: user
+delete_permissions:
+- permission:
+    filter:
+      bill:
+        user_id:
+          _eq: X-Hasura-User-Id
+  role: user
