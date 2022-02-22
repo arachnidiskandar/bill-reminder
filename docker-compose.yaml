@@ -21,25 +21,25 @@ services:
       HASURA_GRAPHQL_DEV_MODE: "true"
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
       HASURA_GRAPHQL_ADMIN_SECRET: admin_secret
-      HASURA_GRAPHQL_JWT_SECRET: '{"type": "RS256", "jwk_url": "https://dev-fee1uvy1.us.auth0.com/.well-known/jwks.json", "allowed_skew": 12000}'
-  backend:
-    build: 
-      dockerfile: Dockerfile.dev
-      context: ./backend
-    ports:
-      - "4000:4000"
-    volumes:
-      - ./backend:/usr/src/app
-      - /usr/src/app/node_modules
+      HASURA_GRAPHQL_JWT_SECRET: '{"type": "HS256", "key": "7UM5NxL0GIJHqfvvp3ddzpWZUum+pck9zWoh9mItnCA="}'
+  # backend:
+  #   build: 
+  #     dockerfile: Dockerfile.dev
+  #     context: ./backend
+  #   ports:
+  #     - "4000:4000"
+  #   volumes:
+  #     - ./backend:/usr/src/app
+  #     - /usr/src/app/node_modules
       
-  frontend:
-    build: 
-      dockerfile: Dockerfile.dev
-      context: ./frontend
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/usr/src/app
-      - /usr/src/app/node_modules
+  # frontend:
+  #   build: 
+  #     dockerfile: Dockerfile.dev
+  #     context: ./frontend
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ./frontend:/usr/src/app
+  #     - /usr/src/app/node_modules
 volumes:
   db_data:
