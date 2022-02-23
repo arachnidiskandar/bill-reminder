@@ -1,4 +1,4 @@
-import { addYears, endOfDay, endOfToday, isAfter, isPast, lastDayOfMonth, setDate, startOfDay } from 'date-fns';
+import { addYears, endOfDay, isPast, startOfDay } from 'date-fns';
 import { Request, Response } from 'express';
 import { gql } from 'graphql-request';
 
@@ -21,7 +21,7 @@ export interface ICreatePaymentsArgs {
   repeatUpTo?: Date;
 }
 
-interface IPaymentsList {
+export interface IPaymentsList {
   date: Date;
   value: number;
   billId: string;
@@ -40,11 +40,10 @@ const insertFutureBills = gql`
 
 export const createPaymentsList = (args: ICreatePaymentsArgs): IPaymentsList[] => {
   const { dueDate, billId, billValue, userId, repeatType, repeatForever, repeatUpTo } = args;
+
   const dueDateValue = new Date(dueDate);
   const dueDateStartRange = startOfDay(dueDateValue);
-  const endDateEndRange = repeatForever
-    ? addYears(lastDayOfMonth(dueDateStartRange), 1)
-    : endOfDay(new Date(repeatUpTo));
+  const endDateEndRange = repeatForever ? addYears(dueDateStartRange, 1) : endOfDay(new Date(repeatUpTo));
   if (BillRepeatType.MONTHLY === repeatType) {
     const listOfDatesByMonth = getDatesBetweenByMonth(dueDateStartRange, endDateEndRange);
     return listOfDatesByMonth.map((date) => ({
@@ -59,6 +58,17 @@ export const createPaymentsList = (args: ICreatePaymentsArgs): IPaymentsList[] =
   if (BillRepeatType.WEEKLY === repeatType) {
     const listOfDatesByWeek = getDatesBetweenByWeek(dueDateStartRange, endDateEndRange);
     return listOfDatesByWeek.map((date) => ({
+      date,
+      value: billValue,
+      billId,
+      userId,
+      isPaid: false,
+      isDelayed: isPast(endOfDay(date)),
+    }));
+  }
+  if (BillRepeatType.YEARLY === repeatType) {
+    const listOfDatesByYear = [dueDateStartRange, endDateEndRange];
+    return listOfDatesByYear.map((date) => ({
       date,
       value: billValue,
       billId,
