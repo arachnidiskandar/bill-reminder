@@ -1,18 +1,24 @@
-import { addYears, endOfDay, endOfToday, isPast, lastDayOfMonth, setDate } from 'date-fns';
+import { addYears, endOfDay, endOfToday, isAfter, isPast, lastDayOfMonth, setDate, startOfDay } from 'date-fns';
 import { Request, Response } from 'express';
 import { gql } from 'graphql-request';
-import { BillRepeatType } from 'src/@types/interfaces';
-import client from 'src/graphql/client';
-import { getDatesBetweenByMonth, getDatesBetweenByWeek } from 'src/helpers';
 
-interface ICreatePaymentsArgs {
+import client from '../../../../graphql/client';
+import { getDatesBetweenByMonth, getDatesBetweenByWeek } from '../../../../helpers';
+
+export enum BillRepeatType {
+  MONTHLY = 'MONTHLY',
+  YEARLY = 'YEARLY',
+  WEEKLY = 'WEEKLY',
+}
+
+export interface ICreatePaymentsArgs {
   dueDate: Date;
   billId: string;
   billValue: number;
   userId: string;
   repeatType?: BillRepeatType | null;
   repeatForever?: boolean;
-  repeatUpTo?: string;
+  repeatUpTo?: Date;
 }
 
 interface IPaymentsList {
@@ -32,11 +38,13 @@ const insertFutureBills = gql`
   }
 `;
 
-const createPaymentsList = (args: ICreatePaymentsArgs): IPaymentsList[] => {
+export const createPaymentsList = (args: ICreatePaymentsArgs): IPaymentsList[] => {
   const { dueDate, billId, billValue, userId, repeatType, repeatForever, repeatUpTo } = args;
-  const day = new Date(dueDate).getDate();
-  const dueDateStartRange = setDate(endOfToday(), day);
-  const endDateEndRange = repeatForever ? addYears(lastDayOfMonth(endOfToday()), 1) : endOfDay(new Date(repeatUpTo));
+  const dueDateValue = new Date(dueDate);
+  const dueDateStartRange = startOfDay(dueDateValue);
+  const endDateEndRange = repeatForever
+    ? addYears(lastDayOfMonth(dueDateStartRange), 1)
+    : endOfDay(new Date(repeatUpTo));
   if (BillRepeatType.MONTHLY === repeatType) {
     const listOfDatesByMonth = getDatesBetweenByMonth(dueDateStartRange, endDateEndRange);
     return listOfDatesByMonth.map((date) => ({
@@ -45,7 +53,7 @@ const createPaymentsList = (args: ICreatePaymentsArgs): IPaymentsList[] => {
       billId,
       userId,
       isPaid: false,
-      isDelayed: isPast(date),
+      isDelayed: isPast(endOfDay(date)),
     }));
   }
   if (BillRepeatType.WEEKLY === repeatType) {
@@ -56,10 +64,12 @@ const createPaymentsList = (args: ICreatePaymentsArgs): IPaymentsList[] => {
       billId,
       userId,
       isPaid: false,
-      isDelayed: isPast(date),
+      isDelayed: isPast(endOfDay(date)),
     }));
   }
-  return [{ date: dueDate, billId, userId, value: billValue, isPaid: false, isDelayed: isPast(new Date(dueDate)) }];
+  return [
+    { date: dueDate, billId, userId, value: billValue, isPaid: false, isDelayed: isPast(endOfDay(dueDateValue)) },
+  ];
 };
 
 const createPaymentsAction = async (req: Request, res: Response) => {
