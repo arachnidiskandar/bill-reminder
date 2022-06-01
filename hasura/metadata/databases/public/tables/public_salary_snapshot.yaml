@@ -1,0 +1,59 @@
+table:
+  name: salary_snapshot
+  schema: public
+configuration:
+  custom_column_names:
+    user_id: userId
+  custom_name: salarySnapshot
+  custom_root_fields: {}
+object_relationships:
+- name: User
+  using:
+    manual_configuration:
+      column_mapping:
+        user_id: id
+      insertion_order: null
+      remote_table:
+        name: users
+        schema: public
+insert_permissions:
+- permission:
+    backend_only: false
+    check:
+      user_id:
+        _eq: X-Hasura-User-Id
+    columns:
+    - date
+    - salary
+    - user_id
+  role: user
+select_permissions:
+- permission:
+    allow_aggregations: true
+    columns:
+    - date
+    - salary
+    - user_id
+    filter:
+      user_id:
+        _eq: X-Hasura-User-Id
+  role: user
+update_permissions:
+- permission:
+    check:
+      user_id:
+        _eq: X-Hasura-User-Id
+    columns:
+    - date
+    - salary
+    - user_id
+    filter:
+      user_id:
+        _eq: X-Hasura-User-Id
+  role: user
+delete_permissions:
+- permission:
+    filter:
+      user_id:
+        _eq: X-Hasura-User-Id
+  role: user

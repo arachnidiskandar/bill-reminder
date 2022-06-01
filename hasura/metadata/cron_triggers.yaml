@@ -3,3 +3,13 @@
   schedule: 0 0 * * *
   include_in_metadata: true
   payload: {}
+- name: check future payments
+  webhook: http://host.docker.internal:4000/hasura/set-future-payments
+  schedule: 0 0 * * *
+  include_in_metadata: true
+  payload: {}
+- name: creates salary snapshot from last month
+  webhook: http://host.docker.internal:4000/hasura/salary-snapshot
+  schedule: '* * * * *'
+  include_in_metadata: true
+  payload: {}
